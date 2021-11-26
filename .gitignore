@@ -1,0 +1,12 @@
+# environment variables
+.env
+.husky
+
+# compiled output
+/lib
+/dist
+node_modules
+
+# Tests
+coverage/
+.nyc_output/
