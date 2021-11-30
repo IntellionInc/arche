@@ -1,4 +1,4 @@
-import { ContextInterface, DictionaryKey } from "./types";
+import { ContextInterface, DictionaryKey, HookErrorDictionary } from "./types";
 
 export class Hook {
 	success = true;
@@ -18,7 +18,8 @@ export class Hook {
 		this.called = true;
 		try {
 			this.result = await this.hookMethod(...args);
-			if (this.result && !this.result.success) this.#errorHandler(this.result.error);
+			if (this.result && this.result.success === false)
+				this.#errorHandler(this.result.error);
 		} catch (error) {
 			this.#errorHandler(error);
 		}
@@ -29,9 +30,12 @@ export class Hook {
 	#errorHandler = (error: any) => {
 		this.success = false;
 		const Dictionary = this.context.errorTable;
-		const key: DictionaryKey = Dictionary.hasOwnProperty(error.name)
-			? error.name
-			: "DEFAULT";
+		const key = this.#getErrorKey(error, Dictionary);
 		this.error = new Dictionary[key](this, error);
+	};
+
+	#getErrorKey = (error: any, Dictionary: HookErrorDictionary): DictionaryKey => {
+		if (!error || !error.name) return "DEFAULT";
+		return Dictionary.hasOwnProperty(error.name) ? error.name : "DEFAULT";
 	};
 }
