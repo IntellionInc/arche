@@ -1,4 +1,4 @@
-import { Hook } from "..";
+import { Hook } from "../Hook";
 
 export class HookError extends Error {
 	constructor(public hook: Hook, public error: Error) {

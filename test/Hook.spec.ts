@@ -1,4 +1,4 @@
-import { Hook } from "src/";
+import { Hook } from "src/Hook";
 import { ContextInterface } from "src/types";
 
 jest.mock("../src/errors/HookError.ts");

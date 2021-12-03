@@ -1,4 +1,5 @@
-import { Chain, Hook } from "src/";
+import { Chain } from "src/Chain";
+import { Hook } from "src/Hook";
 import { Queue, Stack } from "src/helpers";
 import { ChainHook } from "src/types";
 import { DefaultContext } from "src/Context";

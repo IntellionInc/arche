@@ -1,4 +1,4 @@
-import { Hook } from "src/";
+import { Hook } from "src/Hook";
 import { HookError, TentativeError } from "src/errors";
 
 describe("HookError: ", () => {
