@@ -29,7 +29,9 @@ jest.mock("../src/Hook.ts", () => ({
 	Hook: class MockHook {
 		constructor(public hookType: any, public hookMethod: any) {}
 		call = jest.fn().mockImplementation(async () => {
-			return await this.hookMethod();
+			const { success, error } = await this.hookMethod();
+			Object.assign(this, { success, error });
+			return this;
 		});
 	}
 }));

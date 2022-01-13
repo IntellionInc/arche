@@ -13,7 +13,7 @@ export class Hook {
 		public context: ContextInterface
 	) {}
 
-	call = async (...args: any[]) => {
+	call = async (...args: any[]): Promise<Hook> => {
 		this.callCount += 1;
 		this.called = true;
 		try {

@@ -67,9 +67,9 @@ export class Chain {
 	};
 
 	#consumeHook = async (hook: Hook) => {
-		const instance = await hook.call();
-		if (!instance.success) {
-			await this.errorHandler(instance.error);
+		await hook.call();
+		if (!hook.success) {
+			await this.errorHandler(hook.error);
 			if (this.shouldBreak) {
 				return false;
 			}
