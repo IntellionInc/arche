@@ -1,7 +1,7 @@
 import { Chain } from "src/Chain";
 import { Hook } from "src/Hook";
 import { Queue, Stack } from "src/helpers";
-import { ChainHook } from "src/types";
+import { ChainHook, Yield } from "src/types";
 import { DefaultContext } from "src/Context";
 
 declare global {
@@ -90,7 +90,6 @@ describe("Chain: ", () => {
 			_afterHooks: new Queue<Hook>(),
 			_finallyHooks: new Queue<Hook>(),
 			duration: 0,
-			yield: {},
 			createdAt: new Date(1609459200000),
 			shouldBreak: true,
 			context: new DefaultContext()
@@ -201,7 +200,7 @@ describe("Chain: ", () => {
 				mockFn6: jest.Mock;
 
 			let hookMethods: jest.Mock[];
-			const chainYield = { some: "yield" };
+			const chainYield = { some: "yield" } as unknown as Yield<any>;
 			beforeEach(() => {
 				jest.advanceTimersByTime(5000);
 				uut.yield = chainYield;

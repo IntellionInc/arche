@@ -1,7 +1,7 @@
 import { Queue, Stack } from "./helpers";
 import { Hook } from "./Hook";
 import { HookError } from "./errors";
-import { ChainHook, HookBucket, ContextInterface } from "./types";
+import { ChainHook, HookBucket, ContextInterface, Yield } from "./types";
 import { DefaultContext } from "./Context";
 
 export class Chain {
@@ -12,7 +12,7 @@ export class Chain {
 	_afterHooks = new Queue<Hook>();
 	_finallyHooks = new Queue<Hook>();
 	duration = 0;
-	yield = {};
+	yield: Yield<any>;
 	createdAt = new Date();
 	shouldBreak = true;
 	context: ContextInterface = new DefaultContext();
