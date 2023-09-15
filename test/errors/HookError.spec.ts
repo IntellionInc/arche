@@ -1,5 +1,5 @@
 import { Hook } from "src/Hook";
-import { HookError, TentativeError } from "src/errors";
+import { BrokenChainError, HookError, TentativeError } from "src/errors";
 
 describe("HookError: ", () => {
 	let uut: HookError;
@@ -112,6 +112,28 @@ describe("TentativeError: ", () => {
 					}
 				});
 			});
+		});
+	});
+});
+
+describe("HookError: ", () => {
+	let uut: BrokenChainError;
+	const error = { message: "some-error-message" } as Error;
+	const mockHook = {} as Hook;
+	describe("class constructor", () => {
+		beforeEach(() => {
+			uut = new BrokenChainError(mockHook, error);
+		});
+		it("should be defined", () => {
+			expect(uut).toBeDefined();
+		});
+
+		it("should extend 'HookError'", () => {
+			expect(uut).toBeInstanceOf(HookError);
+		});
+
+		it("should have the correct error", () => {
+			expect(uut.error).toEqual(new Error("Chain Broken Due to Unsuccessful Hook"));
 		});
 	});
 });

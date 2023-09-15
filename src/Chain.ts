@@ -1,6 +1,5 @@
 import { Queue, Stack } from "./helpers";
 import { Hook } from "./Hook";
-import { HookError } from "./errors";
 import { ChainHook, HookBucket, ContextInterface, Yield } from "./types";
 import { DefaultContext } from "./Context";
 
@@ -26,8 +25,9 @@ export class Chain {
 	}
 
 	addHook = (type: ChainHook, method: (args: any) => any, ...args: any[]) => {
+		const newHook = new Hook(type, method.bind(this.context, ...args), this.context);
 		const selectedHook = this[`_${type}Hooks` as keyof Chain] as HookBucket<Hook>;
-		selectedHook.insert(new Hook(type, method.bind(this.context, ...args), this.context));
+		selectedHook.insert(newHook);
 		return this;
 	};
 
@@ -69,7 +69,7 @@ export class Chain {
 	#consumeHook = async (hook: Hook) => {
 		await hook.call();
 		if (!hook.success) {
-			await this.errorHandler(hook.error);
+			await this.errorHandler(hook);
 			if (this.shouldBreak) {
 				return false;
 			}
@@ -83,5 +83,8 @@ export class Chain {
 		}
 	};
 
-	errorHandler = async (error: HookError) => error.handle();
+	async errorHandler(hook: Hook) {
+		console.log(`Hook Error at: ${this.constructor.name}`);
+		console.error(hook.error);
+	}
 }
