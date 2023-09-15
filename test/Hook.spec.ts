@@ -107,18 +107,22 @@ describe("Hook: ", () => {
 
 					describe("when the error is undefined", () => {
 						const error = undefined;
-						const mockDefaultReturnedError = { message: "some-default-error" };
-						let mockDefaultError: jest.Mock;
+						const mockBrokenChainReturnedError = { message: "some-broken-chain-error" };
+						let mockBrokenChainError: jest.Mock;
 						beforeEach(() => {
-							mockDefaultError = jest.fn().mockReturnValueOnce(mockDefaultReturnedError);
-							Object.assign(mockContext, { errorTable: { DEFAULT: mockDefaultError } });
+							mockBrokenChainError = jest
+								.fn()
+								.mockReturnValueOnce(mockBrokenChainReturnedError);
+							Object.assign(mockContext, {
+								errorTable: { BROKEN_CHAIN: mockBrokenChainError }
+							});
 							Object.assign(methodResult, { success: false, error });
 						});
-						it("should set success as false, and error to default error", async () => {
+						it("should set success as false, and error to broken chain error", async () => {
 							const result = await uut.call(...methodArgs);
 							expect(result).toBe(uut);
 							expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-							expect(mockDefaultError).toHaveBeenCalledWith(uut, error);
+							expect(mockBrokenChainError).toHaveBeenCalledWith(uut, error);
 						});
 					});
 				});

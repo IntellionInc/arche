@@ -35,7 +35,8 @@ export class Hook {
 	};
 
 	#getErrorKey = (error: any, Dictionary: HookErrorDictionary): DictionaryKey => {
-		if (!error || !error.name) return "DEFAULT";
+		if (!error) return "BROKEN_CHAIN";
+		if (!error.name) return "DEFAULT";
 		return Dictionary.hasOwnProperty(error.name) ? error.name : "DEFAULT";
 	};
 }
