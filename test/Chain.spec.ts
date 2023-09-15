@@ -235,18 +235,36 @@ describe("Chain: ", () => {
 				});
 			});
 			describe("when some hooks are not successful", () => {
+				const mockConstructorName = "some-constructor-name";
 				const error = { handle: null };
-				let errorSpy: jest.SpyInstance;
-				let mockHandleError: jest.Mock;
+				let mockConsoleLog: jest.Mock;
+				let actualConsoleLog: any;
+				let mockConsoleError: jest.Mock;
+				let actualConsoleError: any;
+
+				beforeAll(() => {
+					mockConsoleLog = jest.fn();
+					mockConsoleError = jest.fn();
+					actualConsoleLog = console.log;
+					actualConsoleError = console.error;
+					console.log = mockConsoleLog;
+					console.error = mockConsoleError;
+				});
+
+				afterAll(() => {
+					console.log = actualConsoleLog;
+					console.error = actualConsoleError;
+				});
+
 				beforeEach(() => {
-					mockHandleError = jest.fn();
-					errorSpy = jest.spyOn(uut, "errorHandler");
-					Object.assign(error, { handle: mockHandleError });
+					Object.assign(uut, { constructor: { name: mockConstructorName } });
 				});
 
 				afterEach(() => {
-					expect(mockHandleError).toHaveBeenCalled();
-					expect(errorSpy).toHaveBeenCalledWith(error);
+					expect(mockConsoleLog).toHaveBeenCalledWith(
+						`Hook Error at: ${mockConstructorName}`
+					);
+					expect(mockConsoleError).toHaveBeenCalledWith(error);
 				});
 
 				describe("when 'shouldBreak' is true", () => {
