@@ -28,3 +28,10 @@ export class TentativeError extends HookError {
 		}
 	};
 }
+
+export class BrokenChainError extends HookError {
+	//eslint-disable-next-line @typescript-eslint/no-unused-vars
+	constructor(hook: Hook, error: Error) {
+		super(hook, new Error("Chain Broken Due to Unsuccessful Hook"));
+	}
+}
