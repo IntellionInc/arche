@@ -1,4 +1,9 @@
-import { DefaultErrorDictionary, HookError, TentativeError } from "src/errors";
+import {
+	BrokenChainError,
+	DefaultErrorDictionary,
+	HookError,
+	TentativeError
+} from "src/errors";
 
 type ErrorKey = keyof typeof DefaultErrorDictionary;
 type PropertyValue = typeof TentativeError | typeof HookError;
@@ -15,6 +20,7 @@ describe("DefaultErrorDictionary: ", () => {
 			ECONNRESET: TentativeError,
 			EPIPE: TentativeError,
 			ERR_STREAM_DESTROYED: TentativeError,
+			BROKEN_CHAIN: BrokenChainError,
 			DEFAULT: HookError
 		};
 
