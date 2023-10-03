@@ -5,16 +5,18 @@ import { DefaultContext } from "./Context";
 
 export class Chain {
 	options: Record<string, any> = {};
+	currentHook: Hook | null = null;
 	_initiallyHooks = new Stack<Hook>();
 	_beforeHooks = new Queue<Hook>();
 	_mainHooks = new Queue<Hook>();
 	_afterHooks = new Queue<Hook>();
 	_finallyHooks = new Queue<Hook>();
 	duration = 0;
-	yield: Yield<any>;
+	yield: Yield<any> = { success: true, data: null, errors: [] };
 	createdAt = new Date();
 	shouldBreak = true;
 	context: ContextInterface = new DefaultContext();
+	errors: Error[] = [];
 
 	constructor(options: Record<string, any> = {}) {
 		Object.keys(options).forEach(key => (this.options[key] = options[key]));
@@ -63,13 +65,16 @@ export class Chain {
 		this.duration = new Date().getTime() - this.createdAt.getTime();
 		if (this.shouldBreak) this.shouldBreak = false;
 		await this.#callHooks([...this._finallyHooks]);
+
+		Object.assign(this.yield, { errors: this.errors });
 		return this.yield;
 	};
 
 	#consumeHook = async (hook: Hook) => {
+		this.currentHook = hook;
 		await hook.call();
 		if (!hook.success) {
-			await this.errorHandler(hook);
+			await this._errorHandler(hook.error);
 			if (this.shouldBreak) {
 				return false;
 			}
@@ -83,8 +88,13 @@ export class Chain {
 		}
 	};
 
-	async errorHandler(hook: Hook) {
+	private _errorHandler = async (error: Error) => {
+		this.errors.push(error);
+		this.errorHandler(error);
+	};
+
+	async errorHandler(error: Error) {
 		console.log(`Hook Error at: ${this.constructor.name}`);
-		console.error(hook.error);
+		console.error(error);
 	}
 }
