@@ -1,7 +1,6 @@
 import { Hook } from "src/Hook";
 import { ContextInterface } from "src/types";
 
-jest.mock("../src/errors/HookError.ts");
 describe("Hook: ", () => {
 	let uut: Hook;
 	const [hookType, hookMethod, mockContext] = [
@@ -38,11 +37,12 @@ describe("Hook: ", () => {
 	describe("Class Methods", () => {
 		describe("call", () => {
 			const methodArgs = ["param1", { some: "param2" }, 42];
+
 			describe("when the hook method resolves", () => {
 				const methodResult = { some: "result", success: null, error: null };
 
 				beforeEach(() => {
-					hookMethod.mockResolvedValueOnce(methodResult);
+					hookMethod.mockResolvedValue(methodResult);
 					Object.assign(uut, { success: true });
 				});
 
@@ -50,6 +50,7 @@ describe("Hook: ", () => {
 					expect(uut.called).toBe(true);
 					expect(uut.result).toBe(methodResult);
 				});
+
 				describe("when the result is successful", () => {
 					beforeEach(() => {
 						Object.assign(methodResult, { success: true, error: null });
@@ -63,125 +64,66 @@ describe("Hook: ", () => {
 						expect(uut.callCount).toBe(1);
 					});
 				});
-				describe("when the result is unsuccessful", () => {
-					describe("when the error is defined", () => {
-						describe("when the error has a 'name' property", () => {
-							const error = { name: "mockError" };
-							const mockReturnedError = { message: "some-error-message" };
 
-							beforeEach(() => {
-								Object.assign(mockContext, {
-									errorTable: {
-										mockError: jest.fn().mockReturnValueOnce(mockReturnedError)
-									}
-								});
-								Object.assign(methodResult, { success: false, error });
-							});
-							it("it should set success as false, and error as thrown error", async () => {
-								const result = await uut.call(...methodArgs);
-								expect(uut.success).toBe(false);
-								expect(result).toBe(uut);
-								expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-								expect(uut.error).toBe(mockReturnedError);
-							});
-						});
-						describe("when the error doesn't have a 'name' property", () => {
-							const error = { some: "error-without-name" };
-							const mockDefaultReturnedError = { message: "some-default-error" };
-							let mockDefaultError: jest.Mock;
-							beforeEach(() => {
-								mockDefaultError = jest
-									.fn()
-									.mockReturnValueOnce(mockDefaultReturnedError);
-								Object.assign(mockContext, { errorTable: { DEFAULT: mockDefaultError } });
-								Object.assign(methodResult, { success: false, error });
-							});
-							it("should set success as false, and error to default error", async () => {
-								const result = await uut.call(...methodArgs);
-								expect(result).toBe(uut);
-								expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-								expect(mockDefaultError).toHaveBeenCalledWith(uut, error);
-							});
-						});
+				describe("when the result is unsuccessful", () => {
+					const error = { message: "some-error-message" };
+
+					beforeEach(() => {
+						Object.assign(methodResult, { success: false, error });
+					});
+
+					it("should set success as false, and error to received error", async () => {
+						const result = await uut.call(...methodArgs);
+						expect(result).toBe(uut);
+						expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
+						expect(uut.error).toBe(error);
 					});
 
 					describe("when the error is undefined", () => {
-						const error = undefined;
-						const mockBrokenChainReturnedError = { message: "some-broken-chain-error" };
-						let mockBrokenChainError: jest.Mock;
 						beforeEach(() => {
-							mockBrokenChainError = jest
-								.fn()
-								.mockReturnValueOnce(mockBrokenChainReturnedError);
-							Object.assign(mockContext, {
-								errorTable: { BROKEN_CHAIN: mockBrokenChainError }
-							});
-							Object.assign(methodResult, { success: false, error });
+							Object.assign(methodResult, { success: false, error: undefined });
 						});
-						it("should set success as false, and error to broken chain error", async () => {
+
+						it("should set success as false, and create a new error with correct message", async () => {
 							const result = await uut.call(...methodArgs);
 							expect(result).toBe(uut);
 							expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-							expect(mockBrokenChainError).toHaveBeenCalledWith(uut, error);
+							expect(uut.error.message).toBe(
+								`Hook returned with an unsuccessful response: ${JSON.stringify({
+									some: "result",
+									success: false
+								})}`
+							);
 						});
 					});
 				});
 			});
 
-			describe("when the hook method throws an error", () => {
-				describe("when the error has a 'name' property", () => {
-					const error = { name: "mockError" };
-					const mockReturnedError = { message: "some-error-message" };
-					let mockError: jest.Mock;
-					describe("when dictionary has an entry for the error", () => {
-						beforeEach(() => {
-							mockError = jest.fn().mockReturnValueOnce(mockReturnedError);
-							Object.assign(mockContext, { errorTable: { mockError } });
-							hookMethod.mockRejectedValueOnce(error);
-						});
-						afterEach(() => {
-							expect(uut.success).toBe(false);
-							expect(uut.error).toBe(mockReturnedError);
-							expect(mockError).toHaveBeenCalledWith(uut, error);
-						});
-						it("should set success as false, and error to thrown error", async () => {
-							expect.assertions(5);
-							const result = await uut.call(...methodArgs);
-							expect(result).toBe(uut);
-							expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-						});
-					});
-					describe("when dictionary doesn't have an entry for the error", () => {
-						const mockDefaultReturnedError = { message: "some-default-error" };
-						let mockDefaultError: jest.Mock;
-						beforeEach(() => {
-							mockDefaultError = jest.fn().mockReturnValueOnce(mockDefaultReturnedError);
-							Object.assign(mockContext, { errorTable: { DEFAULT: mockDefaultError } });
-							hookMethod.mockRejectedValueOnce(error);
-						});
-						it("should set success as false, and error to default error", async () => {
-							const result = await uut.call(...methodArgs);
-							expect(result).toBe(uut);
-							expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-							expect(mockDefaultError).toHaveBeenCalledWith(uut, error);
-						});
-					});
+			describe("when the result is not defined, and method rejects with no error", () => {
+				beforeEach(() => {
+					hookMethod.mockRejectedValue(undefined);
 				});
-				describe("when the error doesn't have a 'name' property", () => {
-					const error = { some: "error-without-name" };
-					const mockDefaultReturnedError = { message: "some-default-error" };
-					let mockDefaultError: jest.Mock;
-					beforeEach(() => {
-						mockDefaultError = jest.fn().mockReturnValueOnce(mockDefaultReturnedError);
-						Object.assign(mockContext, { errorTable: { DEFAULT: mockDefaultError } });
-						hookMethod.mockRejectedValueOnce(error);
-					});
-					it("should set success as false, and error to default error", async () => {
-						const result = await uut.call(...methodArgs);
-						expect(result).toBe(uut);
-						expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
-						expect(mockDefaultError).toHaveBeenCalledWith(uut, error);
-					});
+
+				it("should set success as false, and create a new error with correct message", async () => {
+					const result = await uut.call(...methodArgs);
+					expect(result).toBe(uut);
+					expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
+					expect(uut.error.message).toBe("Hook returned with an unsuccessful response");
+				});
+			});
+
+			describe("when the hook method throws an error", () => {
+				const error = { message: "some-error-message" };
+
+				beforeEach(() => {
+					hookMethod.mockRejectedValue(error);
+				});
+
+				it("should set success as false, and error to thrown error", async () => {
+					const result = await uut.call(...methodArgs);
+					expect(result).toBe(uut);
+					expect(hookMethod).toHaveBeenCalledWith(...methodArgs);
+					expect(result.error).toBe(error);
 				});
 			});
 		});

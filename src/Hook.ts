@@ -5,7 +5,7 @@ export class Hook {
 	called = false;
 	callCount = 0;
 	result: any = null;
-	error: any = null;
+	error: Error = null;
 
 	constructor(
 		public hookType: string,
@@ -27,16 +27,14 @@ export class Hook {
 		return this;
 	};
 
-	#errorHandler = (error: any) => {
+	#errorHandler = (error: Error | null) => {
 		this.success = false;
-		const Dictionary = this.context.errorTable;
-		const key = this.#getErrorKey(error, Dictionary);
-		this.error = new Dictionary[key](this, error);
-	};
-
-	#getErrorKey = (error: any, Dictionary: HookErrorDictionary): DictionaryKey => {
-		if (!error) return "BROKEN_CHAIN";
-		if (!error.name) return "DEFAULT";
-		return Dictionary.hasOwnProperty(error.name) ? error.name : "DEFAULT";
+		this.error = error
+			? error
+			: new Error(
+					`Hook returned with an unsuccessful response${
+						this.result ? `: ${JSON.stringify(this.result)}` : ""
+					}`
+			  );
 	};
 }

@@ -56,10 +56,12 @@ describe("Chain: ", () => {
 
 	describe("class constructor", () => {
 		let instance: Chain;
+
 		describe("when options object is provided", () => {
 			beforeEach(() => {
 				instance = new Chain(options);
 			});
+
 			it("should be defined with the correct options", () => {
 				expect(instance).toBeDefined();
 				Object.keys(options).forEach(key => {
@@ -68,10 +70,12 @@ describe("Chain: ", () => {
 				});
 			});
 		});
+
 		describe("when options object is not provided", () => {
 			beforeEach(() => {
 				instance = new Chain();
 			});
+
 			it("should be defined", () => {
 				expect(instance).toBeDefined();
 			});
@@ -85,14 +89,17 @@ describe("Chain: ", () => {
 	it("should have the correct properties", () => {
 		const classProperties: Record<string, any> = {
 			_initiallyHooks: new Stack<Hook>(),
+			currentHook: null,
 			_beforeHooks: new Queue<Hook>(),
 			_mainHooks: new Queue<Hook>(),
 			_afterHooks: new Queue<Hook>(),
 			_finallyHooks: new Queue<Hook>(),
 			duration: 0,
+			yield: { success: true, data: null, errors: [] },
 			createdAt: new Date(1609459200000),
 			shouldBreak: true,
-			context: new DefaultContext()
+			context: new DefaultContext(),
+			errors: []
 		};
 
 		Object.keys(classProperties).forEach(key => {
@@ -146,6 +153,7 @@ describe("Chain: ", () => {
 				andThen5: jest.Mock;
 
 			let hooksArray: { name: ChainHook; fn: any }[];
+
 			beforeEach(() => {
 				initially2 = jest.fn().mockResolvedValue({ success: true });
 				initially1 = jest.fn().mockResolvedValue({ success: true });
@@ -173,6 +181,7 @@ describe("Chain: ", () => {
 					{ name: "andThen", fn: andThen5 }
 				];
 			});
+
 			it("should call chain methods with the correct order", async () => {
 				let chain = new Chain();
 				hooksArray.forEach(({ name, fn }) => {
@@ -230,13 +239,15 @@ describe("Chain: ", () => {
 						.finally(mockFn5)
 						.finally(mockFn6).x;
 				});
+
 				it("should call all the hooks", async () => {
 					hookMethods.forEach(method => expect(method).toHaveBeenCalled());
 				});
 			});
+
 			describe("when some hooks are not successful", () => {
 				const mockConstructorName = "some-constructor-name";
-				const error = { handle: null };
+				const error = { message: "some-error-message" };
 				let mockConsoleLog: jest.Mock;
 				let actualConsoleLog: any;
 				let mockConsoleError: jest.Mock;
@@ -265,6 +276,7 @@ describe("Chain: ", () => {
 						`Hook Error at: ${mockConstructorName}`
 					);
 					expect(mockConsoleError).toHaveBeenCalledWith(error);
+					expect(uut.errors).toEqual([error]);
 				});
 
 				describe("when 'shouldBreak' is true", () => {
@@ -273,6 +285,7 @@ describe("Chain: ", () => {
 							mockFn2 = jest.fn().mockResolvedValue({ success: false, error });
 							hookMethods = [mockFn1, mockFn2, mockFn3, mockFn4, mockFn5, mockFn6];
 						});
+
 						it("should break on error and call all 'finally' hooks", async () => {
 							await uut
 								.before(mockFn1)
@@ -288,6 +301,7 @@ describe("Chain: ", () => {
 							expect(mockFn3).not.toHaveBeenCalled();
 						});
 					});
+
 					describe("when one of the 'finally' hooks are unsuccessful", () => {
 						beforeEach(async () => {
 							mockFn4 = jest.fn().mockResolvedValue({ success: false, error });
@@ -300,16 +314,19 @@ describe("Chain: ", () => {
 								.finally(mockFn5)
 								.finally(mockFn6).x;
 						});
+
 						it("should call all the hooks", () => {
 							hookMethods.forEach(method => expect(method).toHaveBeenCalled());
 						});
 					});
 				});
+
 				describe("when 'shouldBreak' is false", () => {
 					beforeEach(async () => {
 						mockFn2 = jest.fn().mockResolvedValue({ success: false, error });
 						hookMethods = [mockFn1, mockFn2, mockFn3, mockFn4, mockFn5, mockFn6];
 						uut.shouldBreak = false;
+
 						await uut
 							.before(mockFn1)
 							.main(mockFn2)
@@ -318,7 +335,8 @@ describe("Chain: ", () => {
 							.finally(mockFn5)
 							.finally(mockFn6).x;
 					});
-					it("should run all the hooks", async () => {
+
+					it("should call all the hooks", async () => {
 						hookMethods.forEach(method => expect(method).toHaveBeenCalled());
 					});
 				});
