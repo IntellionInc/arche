@@ -15,6 +15,7 @@ export class Chain {
 	yield: Yield<any> = { success: true, data: null, errors: [] };
 	createdAt = new Date();
 	shouldBreak = true;
+	skipsToFinally = false;
 	context: ContextInterface = new DefaultContext();
 	errors: Error[] = [];
 
@@ -64,6 +65,7 @@ export class Chain {
 		await this.#callHooks(hooksList);
 		this.duration = new Date().getTime() - this.createdAt.getTime();
 		if (this.shouldBreak) this.shouldBreak = false;
+		if (this.skipsToFinally) this.skipsToFinally = false;
 		await this.#callHooks([...this._finallyHooks]);
 
 		Object.assign(this.yield, { errors: this.errors });
@@ -79,7 +81,7 @@ export class Chain {
 				return false;
 			}
 		}
-		return true;
+		return !this.skipsToFinally;
 	};
 
 	#callHooks = async (hookList: Hook[]) => {

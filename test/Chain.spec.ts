@@ -98,6 +98,7 @@ describe("Chain: ", () => {
 			yield: { success: true, data: null, errors: [] },
 			createdAt: new Date(1609459200000),
 			shouldBreak: true,
+			skipsToFinally: false,
 			context: new DefaultContext(),
 			errors: []
 		};
@@ -225,6 +226,28 @@ describe("Chain: ", () => {
 			afterEach(() => {
 				expect(uut.duration).toBe(5000);
 				expect(uut.yield).toBe(chainYield);
+			});
+
+			describe("when 'skipsToFinally' is true", () => {
+				beforeEach(() => {
+					uut.skipsToFinally = true;
+				});
+
+				it("should skip main and after hooks and call all 'finally' hooks", async () => {
+					await uut
+						.before(mockFn1)
+						.main(mockFn2)
+						.after(mockFn3)
+						.finally(mockFn4)
+						.finally(mockFn5)
+						.finally(mockFn6).x;
+
+					[mockFn1, mockFn4, mockFn5, mockFn6].forEach(method =>
+						expect(method).toHaveBeenCalled()
+					);
+					expect(mockFn2).not.toHaveBeenCalled();
+					expect(mockFn3).not.toHaveBeenCalled();
+				});
 			});
 
 			describe("when all hooks are successful", () => {
