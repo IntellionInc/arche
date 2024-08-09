@@ -233,7 +233,7 @@ describe("Chain: ", () => {
 					uut.skipsToFinally = true;
 				});
 
-				it("should break after before hooks and call all 'finally' hooks", async () => {
+				it("should skip main and after hooks and call all 'finally' hooks", async () => {
 					await uut
 						.before(mockFn1)
 						.main(mockFn2)
