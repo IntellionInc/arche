@@ -12,37 +12,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org/'
       - run: npm ci --ignore-scripts
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NPM_TOKEN: ${{secrets.npm_token}}
       - run: npm test --ignore-scripts
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NPM_TOKEN: ${{secrets.npm_token}}
       - run: npm rebuild && npm run prepare --if-present
-      
+
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24.x'
-          registry-url: 'https://registry.npmjs.org/'
+          package-manager-cache: false
       - run: npm ci --ignore-scripts
         env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-      - run: npm run build
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+          NPM_TOKEN: ${{secrets.npm_token}}
+      - run: npm run build --if-present
+      - run: npm publish # No NPM_TOKEN here - OIDC handles auth
       - run: npm rebuild && npm run prepare --if-present
