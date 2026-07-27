@@ -100,7 +100,8 @@ describe("Chain: ", () => {
 			shouldBreak: true,
 			skipsToFinally: false,
 			context: new DefaultContext(),
-			errors: []
+			errors: [],
+			pendingPromises: []
 		};
 
 		Object.keys(classProperties).forEach(key => {
@@ -363,6 +364,39 @@ describe("Chain: ", () => {
 						hookMethods.forEach(method => expect(method).toHaveBeenCalled());
 					});
 				});
+			});
+		});
+
+		describe("pendingPromises", () => {
+			const error = { message: "some-error-message" };
+
+			beforeEach(() => {
+				jest.useRealTimers();
+			});
+
+			afterEach(() => {
+				jest.useFakeTimers();
+				jest.setSystemTime(new Date(1609459200000));
+			});
+
+			it("lets an overridden errorHandler register a promise for callers to await later", async () => {
+				let trackedPromiseSettled = false;
+				uut.errorHandler = jest.fn().mockImplementation(async function (this: Chain) {
+					const work = new Promise<void>(resolve => setTimeout(resolve, 20)).then(() => {
+						trackedPromiseSettled = true;
+					});
+					this.pendingPromises.push(work);
+				});
+				const failingHook = jest.fn().mockResolvedValue({ success: false, error });
+
+				await uut.main(failingHook).x;
+
+				expect(uut.pendingPromises).toHaveLength(1);
+				expect(trackedPromiseSettled).toBe(false);
+
+				await Promise.all(uut.pendingPromises);
+
+				expect(trackedPromiseSettled).toBe(true);
 			});
 		});
 	});
