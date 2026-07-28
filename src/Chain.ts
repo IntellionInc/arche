@@ -18,6 +18,7 @@ export class Chain {
 	skipsToFinally = false;
 	context: ContextInterface = new DefaultContext();
 	errors: Error[] = [];
+	pendingPromises: Promise<unknown>[] = [];
 
 	constructor(options: Record<string, any> = {}) {
 		Object.keys(options).forEach(key => (this.options[key] = options[key]));
